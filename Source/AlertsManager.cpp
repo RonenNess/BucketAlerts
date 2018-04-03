@@ -2,11 +2,6 @@
 #include "TokenBucket.h"
 #include "Clock.h"
 #include "Defs.h"
-#include <mutex>
-
-
-// mutex for thread safety
-std::mutex mtx;
 
 
 namespace BucketAlerts
@@ -23,13 +18,13 @@ namespace BucketAlerts
 	void AlertsManager::CreateBucket(CategoryId cat_id, BucketId bucket_id, const TokenBucket& bucket)
 	{
 		// lock mutex
-		if (Defs::ThreadSafe) mtx.lock();
+		if (Defs::ThreadSafe) _mtx.lock();
 
 		// create bucket in category
 		_buckets[cat_id][bucket_id] = bucket;
 
 		// unlock mutex
-		if (Defs::ThreadSafe) mtx.unlock();
+		if (Defs::ThreadSafe) _mtx.unlock();
 	}
 
 	void AlertsManager::CreateBucket(CategoryId cat_id, BucketId bucket_id, double starting_tokens, double max_tokens, double replenish_rate, BucketCallback callback)
@@ -52,13 +47,13 @@ namespace BucketAlerts
 	void AlertsManager::Clear()
 	{
 		// lock mutex
-		if (Defs::ThreadSafe) mtx.lock();
+		if (Defs::ThreadSafe) _mtx.lock();
 
 		// clear buckets
 		_buckets.clear();
 
 		// unlock mutex
-		if (Defs::ThreadSafe) mtx.unlock();
+		if (Defs::ThreadSafe) _mtx.unlock();
 	}
 
 	TokenBucket& AlertsManager::GetBucket(CategoryId cat_id, BucketId bucket_id)
@@ -108,7 +103,7 @@ namespace BucketAlerts
 
 	void AlertsManager::ManualUpdate()
 	{
-		mtx.lock();
+		_mtx.lock();
 		for (auto cat_it = _buckets.begin(); cat_it != _buckets.end(); ++cat_it)
 		{
 			for (auto bucket = cat_it->second.begin(); bucket != cat_it->second.end(); ++bucket)
@@ -116,12 +111,12 @@ namespace BucketAlerts
 				bucket->second.Update();
 			}
 		}
-		mtx.unlock();
+		_mtx.unlock();
 	}
 
 	void AlertsManager::ResetAll()
 	{
-		mtx.lock();
+		_mtx.lock();
 		for (auto cat_it = _buckets.begin(); cat_it != _buckets.end(); ++cat_it)
 		{
 			for (auto bucket = cat_it->second.begin(); bucket != cat_it->second.end(); ++bucket)
@@ -129,7 +124,7 @@ namespace BucketAlerts
 				bucket->second.Reset();
 			}
 		}
-		mtx.unlock();
+		_mtx.unlock();
 	}
 
 	AlertsManager& get_main()

@@ -7,6 +7,7 @@
 #include "TokenBucket.h"
 #include "Defs.h"
 #include <unordered_map>
+#include <mutex>
 
 
 namespace BucketAlerts
@@ -27,6 +28,9 @@ namespace BucketAlerts
 
 		// all the buckets
 		std::unordered_map<CategoryId, std::unordered_map<BucketId, TokenBucket> > _buckets;
+
+		// mutex for thread safe mode
+		std::mutex _mtx;
 
 	public:
 
